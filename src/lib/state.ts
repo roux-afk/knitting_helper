@@ -20,7 +20,7 @@ export async function getState(owner=OWNER) {
   const sessions=await query('SELECT * FROM sessions WHERE owner_id=$1 ORDER BY created_at DESC');
   const movements=await query('SELECT m.*,r.yarn_id FROM movements m JOIN receipts r ON r.id=m.receipt_id AND r.owner_id=m.owner_id WHERE m.owner_id=$1 ORDER BY m.created_at DESC');
   const templates=await query('SELECT * FROM templates WHERE owner_id=$1 ORDER BY created_at DESC');
-  const photos=await query('SELECT id,project_id,created_at FROM photos WHERE owner_id=$1 ORDER BY created_at');
+  const photos=await query("SELECT id,project_id,created_at FROM attachments WHERE owner_id=$1 AND project_id IS NOT NULL AND kind='photo' ORDER BY is_cover DESC,sort_order,created_at");
   const importedPurchases=await query("SELECT target_id,data FROM import_items WHERE owner_id=$1 AND kind='purchase' ORDER BY data->>'date'");
   for(const p of projects){
    p.yarn_cost=movements.filter(m=>m.project_id===p.id).reduce((total,m)=>{const r=receipts.find(r=>r.id===m.receipt_id)!;return r.cost===null?total:total.minus(new Decimal(m.grams).times(r.cost).div(r.grams));},new Decimal(0)).toString();

@@ -28,7 +28,7 @@ export async function POST(request:NextRequest) {
   const result=await transact(OWNER,async c=>{
    if(!(await c.query('SELECT 1 FROM projects WHERE owner_id=$1 AND id=$2',[OWNER,projectId])).rowCount) throw new DomainError('Проект не найден',404);
    path=resolve(dir,filename);await writeFile(path,photo,{mode:0o600});
-   return (await c.query('INSERT INTO photos(owner_id,project_id,filename) VALUES($1,$2,$3) RETURNING id',[OWNER,projectId,filename])).rows[0];
+   return (await c.query('INSERT INTO attachments(owner_id,project_id,filename,original_name,sort_order,is_cover) SELECT $1,$2,$3,$4,COUNT(*),COUNT(*)=0 FROM attachments WHERE owner_id=$1 AND project_id=$2 RETURNING id',[OWNER,projectId,filename,file.name.slice(0,200)])).rows[0];
   });
   return NextResponse.json(result);
  }catch(e){if(path)await unlink(path).catch(()=>{});return failure(e);}

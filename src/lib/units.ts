@@ -2,7 +2,7 @@ import Decimal from 'decimal.js';
 // SQLite columns use integers: milligrams, millimetres and kopecks.
 export const scales:Record<string,number>={grams:1000,skein_weight:1000,skein_length:1000,balance:1000,used:1000,cost:100,hourly_rate:100,rate:100,price:100,other_cost:100,legacy_material_cost:100};
 export const jsonColumns=new Set(['result','payload','preview','data','source_data','totals']);
-export const booleanColumns=new Set(['historical','archived','needs_inventory','cost_incomplete']);
+export const booleanColumns=new Set(['historical','archived','needs_inventory','cost_incomplete','is_cover']);
 export function integerUnits(value:unknown,scale:number):number|null{
  if(value===null||value===undefined)return null;
  const n=new Decimal(String(value)).times(scale);

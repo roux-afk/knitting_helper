@@ -4,6 +4,7 @@ const {createServer}=require('node:net');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const {createUpdater}=require('./updater.cjs');
+const {selectBackupsToDelete}=require('./backups.cjs');
 app.setName('Петелька');
 if(process.env.KNITTING_DATA_DIR)app.setPath('userData',path.resolve(process.env.KNITTING_DATA_DIR));
 let window,service,origin,updater,quitting=false,archiveBusy=false;
@@ -36,11 +37,17 @@ async function restoreArchive(){
   await window.loadURL(origin);await dialog.showMessageBox(window,{message:'Мастерская восстановлена',type:'info'});
  }catch(e){dialog.showErrorBox('Не удалось восстановить мастерскую',e.message);}finally{archiveBusy=false;}
 }
+async function pruneBackups(dir){
+ const entries=[];
+ for(const name of await fs.readdir(dir)){const stat=await fs.stat(path.join(dir,name)).catch(()=>null);if(stat?.isFile())entries.push({name,mtimeMs:stat.mtimeMs});}
+ for(const name of selectBackupsToDelete(entries))await fs.rm(path.join(dir,name),{force:true});
+}
 async function automaticBackup(){
  const dir=path.join(dataDir(),'backups');await fs.mkdir(dir,{recursive:true});
  const file=path.join(dir,`daily-${new Date().toISOString().slice(0,10)}.json`);
- try{await fs.access(file);return;}catch{}
- await fs.writeFile(file,await (await request('/api/export')).text(),{mode:0o600,flag:'wx'});
+ try{await fs.access(file);}
+ catch{await fs.writeFile(file,await (await request('/api/export')).text(),{mode:0o600,flag:'wx'});}
+ await pruneBackups(dir);
 }
 // Saved before an update is installed; the update is cancelled if this fails.
 async function backupBeforeUpdate(version){
