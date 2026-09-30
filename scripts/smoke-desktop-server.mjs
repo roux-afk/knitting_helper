@@ -17,7 +17,7 @@ const child=spawn(process.execPath,[join(dir,'server/server.js')],{cwd:dir,env:{
 let log='';child.stdout.on('data',d=>{log=(log+d).slice(-4000);});child.stderr.on('data',d=>{log=(log+d).slice(-4000);});
 const exited=new Promise(r=>child.once('exit',r));
 const request=(endpoint,options={})=>fetch(origin+endpoint,{...options,headers:{Origin:origin,'x-knitting-token':token,...options.headers},signal:AbortSignal.timeout(15000)});
-async function json(endpoint,options){const r=await request(endpoint,options);const data=await r.json();assert.equal(r.status,200,JSON.stringify(data));return data;}
+async function json(endpoint,options){const r=await request(endpoint,options);const text=await r.text();assert.equal(r.status,200,`${endpoint} -> ${r.status}: ${text.slice(0,500)}\nserver log: ${log}`);return JSON.parse(text);}
 const command=cmd=>json('/api/commands',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:randomUUID(),command:cmd})});
 try{
  let ready=false;for(let i=0;i<80;i++){try{if((await request('/api/state')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}assert.ok(ready,log);
@@ -44,4 +44,4 @@ try{
  await json('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:batch.id,selected:batch.preview.rows.map(r=>r.key),acknowledge:true})});
  assert.equal((await json('/api/state')).templates.length,1);
  console.log('Production passed: page/assets, access guards, project, yarn, consumption, timer, photo, archive restore and Excel import.');
-}finally{child.kill();await exited;await rm(dir,{recursive:true,force:true});}
+}catch(e){console.error('Server log:\n'+log);throw e;}finally{child.kill();await exited;await rm(dir,{recursive:true,force:true});}
