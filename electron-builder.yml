@@ -1,0 +1,31 @@
+appId: local.petelka.workshop
+productName: Петелька
+directories:
+  output: dist
+files:
+  - electron/**/*
+  - package.json
+  - '!node_modules/**/*'
+extraResources:
+  - from: desktop/server
+    to: server
+  - from: desktop/server/node_modules
+    to: server/node_modules
+  - from: desktop/schema
+    to: schema
+  - from: desktop/build-info.json
+    to: build-info.json
+asar: true
+npmRebuild: false
+afterPack: scripts/check-package.cjs
+mac:
+  icon: desktop/icon.png
+  category: public.app-category.lifestyle
+  target: [dmg, zip]
+win:
+  icon: desktop/icon.png
+  target: [nsis]
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false

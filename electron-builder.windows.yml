@@ -1,0 +1,33 @@
+# Keep this standalone: inherited extraResources are merged and would include Mac binaries.
+appId: local.petelka.workshop
+productName: Петелька
+files:
+  - electron/**/*
+  - package.json
+  - '!node_modules/**/*'
+asar: true
+npmRebuild: false
+afterPack: scripts/check-package.cjs
+directories:
+  output: dist/windows
+extraResources:
+  - from: desktop-win/server
+    to: server
+  - from: desktop-win/server/node_modules
+    to: server/node_modules
+  - from: desktop-win/schema
+    to: schema
+  - from: desktop-win/build-info.json
+    to: build-info.json
+win:
+  icon: desktop-win/icon.png
+  target: [nsis, zip]
+  signExecutable: false
+  artifactName: Petelka-${version}-windows-${arch}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  artifactName: Petelka-${version}-windows-${arch}-setup.${ext}
+  installerLanguages: [ru_RU, en_US]
+  language: '1049'

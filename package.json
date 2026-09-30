@@ -1,0 +1,52 @@
+{
+  "name": "knitting-tracker",
+  "version": "0.2.0",
+  "private": true,
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
+  },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 4317",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 --port 4317",
+    "typecheck": "tsc --noEmit",
+    "db:start": "node scripts/database.mjs start",
+    "db:stop": "node scripts/database.mjs stop",
+    "db:migrate": "node scripts/database.mjs migrate",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "desktop:prepare": "npm run build && node scripts/prepare-desktop.mjs",
+    "desktop:start": "electron .",
+    "desktop:verify": "node scripts/smoke-desktop-server.mjs",
+    "desktop:windows": "npm run desktop:prepare && npm run desktop:verify && node scripts/prepare-windows.mjs && electron-builder --config electron-builder.windows.yml --win --x64 --publish never",
+    "desktop:pack": "npm run desktop:prepare && electron-builder --dir",
+    "desktop:dist": "npm run desktop:prepare && electron-builder",
+    "db:import-postgres": "node --import tsx scripts/import-postgres.ts"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0",
+    "exceljs": "^4.4.0",
+    "lucide-react": "^1.48.0",
+    "next": "^16.3.7",
+    "pg": "^8.23.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.3",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "description": "Личная мастерская вязания: изделия, пряжа и время",
+  "author": "Петелька",
+  "main": "electron/main.cjs"
+}

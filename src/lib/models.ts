@@ -1,0 +1,8 @@
+import type {ImportRow} from './import-types';
+export interface Project {id:string;title:string;category:string;notes:string;quantity:number;purpose:string;status:string;start_date:string|null;end_date:string|null;end_month:string|null;rate:string;price:string|null;other_cost:string;historical:boolean;archived:boolean;version:number;seconds:number;yarn_cost:string;cost_incomplete:boolean;created_at:string;source_data:ImportRow|null;legacy_material_cost:string|null}
+export interface Yarn {id:string;manufacturer:string;name:string;color:string;color_hex:string;composition:string;skein_weight:string;skein_length:string|null;balance:string;personal_code:string|null;needs_inventory:boolean}
+export interface Receipt {id:string;yarn_id:string;grams:string;cost:string|null;balance:string;skein_weight:string;skein_length:string|null;dye_lot:string;purchased_on:string;note:string}
+export interface Session {id:string;project_id:string;started_at:string|null;ended_at:string|null;manual_seconds:number|null;note:string;created_at:string}
+export interface Usage {project_id:string;yarn_id:string;grams:string;historical:boolean}
+export interface Template {id:string;title:string;category:string;notes:string;rate:string;price:string|null}
+export interface State {profile:{hourly_rate:string;timezone:string};projects:Project[];yarns:Yarn[];receipts:Receipt[];usage:Usage[];sessions:Session[];movements:{id:string;yarn_id:string;project_id:string|null;receipt_id:string;grams:string;kind:string;reason:string;created_at:string}[];templates:Template[];photos:{id:string;project_id:string}[];importedPurchases:{target_id:string;data:ImportRow}[];serverNow:string}
