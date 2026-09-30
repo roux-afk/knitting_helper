@@ -5,6 +5,7 @@ import Forms,{type FormKind} from './forms';
 import {clock,dateLabel,duration,Empty,money,number,purposeLabels,Skein,statusLabels} from './primitives';
 import type {State,Project,Session,Yarn} from '@/lib/models';
 import ImportPanel from './import-panel';
+import {useUpdates} from './updates';
 import {ImportedPurchases,LegacyCosts,SourceNotes} from './imported-data';
 
 type Tab='projects'|'yarn'|'finished'|'templates'|'import';
@@ -14,6 +15,7 @@ export default function Studio(){
  const [tab,setTab]=useState<Tab>('projects');const [selected,setSelected]=useState<string|null>(null);const [selectedYarn,setSelectedYarn]=useState<string|null>(null);
  const [filter,setFilter]=useState('all');const [search,setSearch]=useState('');const [form,setForm]=useState<FormKind|null>(null);
  const [error,setError]=useState('');const [toast,setToast]=useState('');const [busy,setBusy]=useState(false);const [now,setNow]=useState(Date.now());const offset=useRef(0);const keys=useRef(new Map<string,string>());
+ const updates=useUpdates(()=>{setError('');setForm({type:'settings'});});
  const refresh=useCallback(async()=>{
   const response=await fetch('/api/state',{cache:'no-store'});const data=await response.json();
   if(!response.ok)throw Error(data.error);offset.current=Date.parse(data.serverNow)-Date.now();setState(data);setLoadError('');
@@ -66,7 +68,7 @@ export default function Studio(){
  function sessionSeconds(s:Session){return s.manual_seconds??(s.ended_at?(Date.parse(s.ended_at)-Date.parse(s.started_at!))/1000:activeSeconds);}
  return <div className="studio">
  <aside className="sidebar"><a className="brand" href="/" aria-label="Петелька, главная"><img src="/icon.svg" alt=""/><span>петелька<small>моя мастерская</small></span></a><nav aria-label="Разделы мастерской">{tabs.map(([id,title,Icon])=><button key={id} className={tab===id?'nav-item selected':'nav-item'} onClick={()=>navigate(id)}><Icon size={19}/><span>{title}</span>{id==='projects'&&state&&<b>{state.projects.filter(p=>!p.archived).length}</b>}</button>)}</nav>
- <div className="sidebar-note"><Skein color="#b5a3c4"/><p>От первого мотка<br/>до последней петли.</p></div><div className="sidebar-bottom"><button className="nav-item" onClick={()=>state&&open({type:'settings'})}><Settings2 size={18}/>Настройки</button><span className="local-status"><i/> Личная мастерская</span></div></aside>
+ <div className="sidebar-note"><Skein color="#b5a3c4"/><p>От первого мотка<br/>до последней петли.</p></div><div className="sidebar-bottom"><button className="nav-item" onClick={()=>state&&open({type:'settings'})}><Settings2 size={18}/>Настройки{(updates?.status==='available'||updates?.status==='downloaded')&&<i className="update-dot" title="Доступно обновление"/>}</button><span className="local-status"><i/> Личная мастерская</span></div></aside>
  <main>
  <div className="topline"><span>Место для ваших идей и теплых вещей</span><span className="today">{new Date(now).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</span></div>
  {active&&activeProject&&<div className="running-bar"><span className="pulse"/><button onClick={()=>{setTab('projects');setSelected(activeProject.id);}}>{activeProject.title}</button><strong>{clock(activeSeconds)}</strong><button className="icon-button" disabled={busy} aria-label="Остановить активный таймер" onClick={()=>act({type:'timer.stop',session_id:active.id},'Таймер на паузе')}><Pause size={18}/></button></div>}

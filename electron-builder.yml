@@ -3,7 +3,7 @@ productName: Петелька
 directories:
   output: dist
 files:
-  - electron/**/*
+  - electron/dist/**/*
   - package.json
   - '!node_modules/**/*'
 extraResources:
@@ -16,6 +16,11 @@ extraResources:
   - from: desktop/build-info.json
     to: build-info.json
 asar: true
+publish:
+  provider: github
+  owner: roux-afk
+  repo: knitting_helper
+  releaseType: release
 npmRebuild: false
 afterPack: scripts/check-package.cjs
 mac:
@@ -25,7 +30,11 @@ mac:
 win:
   icon: desktop/icon.png
   target: [nsis]
+  signExecutable: false
 nsis:
   oneClick: false
+  artifactName: Petelka-${version}-windows-${arch}-setup.${ext}
+  installerLanguages: [ru_RU, en_US]
+  language: '1049'
   allowToChangeInstallationDirectory: true
   deleteAppDataOnUninstall: false

@@ -17,3 +17,5 @@ data/private/
 data/
 *.tsbuildinfo
 next-env.d.ts
+electron/dist/
+.claude/

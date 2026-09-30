@@ -1,0 +1,36 @@
+name: Release
+# Выпуск: git tag v0.3.1 && git push origin v0.3.1
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Версия тега совпадает с package.json
+        shell: bash
+        run: |
+          v=$(node -p "require('./package.json').version")
+          if [ "v$v" != "${GITHUB_REF_NAME}" ]; then echo "Тег ${GITHUB_REF_NAME} не совпадает с версией $v"; exit 1; fi
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run desktop:prepare
+      - run: npm run desktop:verify
+      - name: Сборка и публикация установщика
+        run: npx electron-builder --win --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Описание выпуска
+        shell: bash
+        run: gh release edit "${GITHUB_REF_NAME}" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

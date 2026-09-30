@@ -1,6 +1,6 @@
 {
   "name": "knitting-tracker",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "overrides": {
     "exceljs": {
@@ -16,8 +16,9 @@
     "db:stop": "node scripts/database.mjs stop",
     "db:migrate": "node scripts/database.mjs migrate",
     "test": "node --import tsx --test tests/*.test.ts",
-    "desktop:prepare": "npm run build && node scripts/prepare-desktop.mjs",
-    "desktop:start": "electron .",
+    "electron:build": "node scripts/build-electron.mjs",
+    "desktop:prepare": "npm run build && node scripts/prepare-desktop.mjs && node scripts/build-electron.mjs",
+    "desktop:start": "node scripts/build-electron.mjs && electron .",
     "desktop:verify": "node scripts/smoke-desktop-server.mjs",
     "desktop:windows": "npm run desktop:prepare && npm run desktop:verify && node scripts/prepare-windows.mjs && electron-builder --config electron-builder.windows.yml --win --x64 --publish never",
     "desktop:pack": "npm run desktop:prepare && electron-builder --dir",
@@ -43,10 +44,12 @@
     "@types/react-dom": "^19.3.0",
     "electron": "^44.5.1",
     "electron-builder": "^26.15.3",
+    "electron-updater": "^6.8.9",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
   "description": "Личная мастерская вязания: изделия, пряжа и время",
   "author": "Петелька",
-  "main": "electron/main.cjs"
+  "main": "electron/dist/main.cjs"
 }

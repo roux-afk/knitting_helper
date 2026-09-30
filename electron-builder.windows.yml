@@ -2,10 +2,15 @@
 appId: local.petelka.workshop
 productName: Петелька
 files:
-  - electron/**/*
+  - electron/dist/**/*
   - package.json
   - '!node_modules/**/*'
 asar: true
+publish:
+  provider: github
+  owner: roux-afk
+  repo: knitting_helper
+  releaseType: release
 npmRebuild: false
 afterPack: scripts/check-package.cjs
 directories:

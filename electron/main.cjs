@@ -3,12 +3,13 @@ const {randomBytes}=require('node:crypto');
 const {createServer}=require('node:net');
 const fs=require('node:fs/promises');
 const path=require('node:path');
+const {createUpdater}=require('./updater.cjs');
 app.setName('Петелька');
 if(process.env.KNITTING_DATA_DIR)app.setPath('userData',path.resolve(process.env.KNITTING_DATA_DIR));
-let window,service,origin,quitting=false,archiveBusy=false;
+let window,service,origin,updater,quitting=false,archiveBusy=false;
 const token=randomBytes(32).toString('hex');
 const dataDir=()=>app.getPath('userData');
-const resources=()=>app.isPackaged?process.resourcesPath:path.resolve(__dirname,'../desktop');
+const resources=()=>app.isPackaged?process.resourcesPath:path.resolve(__dirname,'../../desktop');
 const headers=()=>({'x-knitting-token':token,Origin:origin});
 async function request(endpoint,options={}){
  const response=await fetch(`${origin}${endpoint}`,{...options,headers:{...headers(),...options.headers},signal:AbortSignal.timeout(120000)});
@@ -41,6 +42,12 @@ async function automaticBackup(){
  try{await fs.access(file);return;}catch{}
  await fs.writeFile(file,await (await request('/api/export')).text(),{mode:0o600,flag:'wx'});
 }
+// Saved before an update is installed; the update is cancelled if this fails.
+async function backupBeforeUpdate(version){
+ const dir=path.join(dataDir(),'backups');await fs.mkdir(dir,{recursive:true});
+ const file=path.join(dir,`before-update-${app.getVersion()}-to-${version}-${Date.now()}.json`);
+ await fs.writeFile(file,await (await request('/api/export')).text(),{mode:0o600,flag:'wx'});
+}
 async function freePort(){const server=createServer();await new Promise((r,j)=>{server.once('error',j);server.listen(0,'127.0.0.1',r);});const port=server.address().port;await new Promise(r=>server.close(r));return port;}
 async function start(){
  await fs.mkdir(dataDir(),{recursive:true});
@@ -54,7 +61,7 @@ async function start(){
  let ready=false;
  for(let i=0;i<120&&!exited;i++){try{const response=await fetch(`${origin}/api/state`,{headers:headers(),signal:AbortSignal.timeout(1000)});if(response.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,250));}
  if(!ready)throw Error('Не удалось запустить локальную мастерскую. Проверьте desktop.log в папке данных.');
- window=new BrowserWindow({width:1280,height:860,minWidth:760,minHeight:600,title:'Петелька',show:false,backgroundColor:'#f7f7fa',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
+ window=new BrowserWindow({width:1280,height:860,minWidth:760,minHeight:600,title:'Петелька',show:false,backgroundColor:'#f7f7fa',webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
  window.webContents.session.setPermissionRequestHandler((_w,_p,callback)=>callback(false));
  window.webContents.session.setPermissionCheckHandler(()=>false);
  window.webContents.session.webRequest.onBeforeSendHeaders({urls:[`${origin}/*`]},(details,callback)=>callback({requestHeaders:{...details.requestHeaders,'x-knitting-token':token}}));
@@ -62,10 +69,12 @@ async function start(){
  window.webContents.setWindowOpenHandler(()=>({action:'deny'}));
  window.webContents.on('will-attach-webview',event=>event.preventDefault());
  window.webContents.session.on('will-download',(_event,item)=>{item.setSaveDialogOptions({defaultPath:`Петелька-${new Date().toISOString().slice(0,10)}.json`});});
- const menu=[...(process.platform==='darwin'?[{label:'Петелька',submenu:[{role:'about'},{type:'separator'},{role:'quit'}]}]:[]),{label:'Мастерская',submenu:[{label:'Сохранить мастерскую…',accelerator:'CmdOrCtrl+Shift+S',click:saveArchive},{label:'Восстановить мастерскую…',click:restoreArchive},{type:'separator'},{label:'Открыть папку данных',click:()=>shell.openPath(dataDir())},{label:'Открыть резервные копии',click:()=>shell.openPath(path.join(dataDir(),'backups'))},...(process.platform==='darwin'?[]:[{role:'quit'}])]},{label:'Правка',submenu:[{role:'undo'},{role:'redo'},{type:'separator'},{role:'cut'},{role:'copy'},{role:'paste'},{role:'selectAll'}]},{label:'Вид',submenu:[{role:'reload'},{role:'resetZoom'},{role:'zoomIn'},{role:'zoomOut'},{role:'togglefullscreen'}]}];
+ const menu=[...(process.platform==='darwin'?[{label:'Петелька',submenu:[{role:'about'},{type:'separator'},{role:'quit'}]}]:[]),{label:'Мастерская',submenu:[{label:'Сохранить мастерскую…',accelerator:'CmdOrCtrl+Shift+S',click:saveArchive},{label:'Восстановить мастерскую…',click:restoreArchive},{type:'separator'},{label:'Открыть папку данных',click:()=>shell.openPath(dataDir())},{label:'Открыть резервные копии',click:()=>shell.openPath(path.join(dataDir(),'backups'))},{type:'separator'},{label:'Проверить обновления…',click:()=>{window?.webContents.send('updates:open');updater?.check(false);}},...(process.platform==='darwin'?[]:[{role:'quit'}])]},{label:'Правка',submenu:[{role:'undo'},{role:'redo'},{type:'separator'},{role:'cut'},{role:'copy'},{role:'paste'},{role:'selectAll'}]},{label:'Вид',submenu:[{role:'reload'},{role:'resetZoom'},{role:'zoomIn'},{role:'zoomOut'},{role:'togglefullscreen'}]}];
  Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+ updater=createUpdater({getWindow:()=>window,beforeInstall:backupBeforeUpdate});
  await window.loadURL(origin);window.show();
  await fs.appendFile(log,'Окно мастерской загружено.\n');
+ setTimeout(()=>updater.check(true),15000);
  automaticBackup().catch(e=>dialog.showErrorBox('Резервная копия не создана',e.message));
 }
 if(!app.requestSingleInstanceLock())app.quit();

@@ -1,6 +1,7 @@
 'use client';
 import {useState,type FormEvent} from 'react';
 import {Field,Modal,categories,number,money} from './primitives';
+import UpdatePanel from './updates';
 import type {State,Project,Yarn,Session,Receipt,Template} from '@/lib/models';
 
 export type FormKind={type:'project';project?:Project;template?:Template}|{type:'yarn'}|{type:'receive';yarn:Yarn}|{type:'consume';project:Project;yarnId?:string}|{type:'time';project:Project;session?:Session}|{type:'adjust';receipt:Receipt}|{type:'settings'};
@@ -74,6 +75,6 @@ export default function Forms({form,state,onClose,onSave,busy,error}:{form:FormK
   <Field label={form.session?'Причина исправления':'Заметка'} name="note" defaultValue={form.session?.note??''} required={!!form.session} placeholder="Например, довязала резинку"/>
  </>}
  {form.type==='adjust'&&<><p className="hint">Введите фактический вес остатка этого поступления после взвешивания. Сейчас в учете {number(form.receipt.balance)} г.</p><Field label="Фактический остаток, г" name="target" type="number" min="0" step="0.001" defaultValue={form.receipt.balance} required/><Field label="Причина" name="reason" required placeholder="Например, взвесила остаток"/></>}
- {form.type==='settings'&&<><Field label="Стоимость часа по умолчанию, ₽" name="rate" type="number" min="0" step="0.01" defaultValue={state.profile.hourly_rate} required/><p className="hint">Применяется к новым проектам. Ставки существующих работ сохраняются.</p><p className="hint">Часовой пояс: {state.profile.timezone}. Данные этой версии хранятся на вашем компьютере.</p></>}
+ {form.type==='settings'&&<><Field label="Стоимость часа по умолчанию, ₽" name="rate" type="number" min="0" step="0.01" defaultValue={state.profile.hourly_rate} required/><p className="hint">Применяется к новым проектам. Ставки существующих работ сохраняются.</p><p className="hint">Часовой пояс: {state.profile.timezone}. Данные этой версии хранятся на вашем компьютере.</p><UpdatePanel/></>}
  </Modal>;
 }
